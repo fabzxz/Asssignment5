@@ -1,0 +1,54 @@
+# Program Name: Assignment5.py
+# Course: IT3883/Section XXX
+# Student Name: Fabian Maqueda-Monroy
+# Assignment Number: Lab5
+# Due Date: 04/18/2025
+# Purpose: This program creates a SQLite database, stores daily temperature readings,
+#          and calculates the average temperatures for Sunday and Thursday.
+# List Specific resources used to complete the assignment:
+#   - https://docs.python.org/3/library/sqlite3.html
+#   - SQLite tutorial on W3Schools
+
+import sqlite3
+
+# Create SQLite connection and cursor
+conn = sqlite3.connect("TemperatureDatabase.db")
+cursor = conn.cursor()
+
+# Step 1: Create the table
+cursor.execute("DROP TABLE IF EXISTS TemperatureData")
+cursor.execute('''
+    CREATE TABLE TemperatureData (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        Day_Of_Week TEXT,
+        Temperature_Value REAL
+    )
+''')
+
+# Step 2: Read and insert data from the file
+with open("Assignment5input.txt", "r") as file:
+    for line in file:
+        parts = line.strip().split()
+        if len(parts) == 2:
+            day = parts[0]
+            try:
+                temperature = float(parts[1])
+                cursor.execute("INSERT INTO TemperatureData (Day_Of_Week, Temperature_Value) VALUES (?, ?)", (day, temperature))
+            except ValueError:
+                print(f"Skipping invalid temperature: {line.strip()}")
+
+conn.commit()  # it Save all inserts
+
+# Step 3: this will Calculate average temperatures
+cursor.execute("SELECT AVG(Temperature_Value) FROM TemperatureData WHERE Day_Of_Week = 'Sunday'")
+sunday_avg = cursor.fetchone()[0]
+
+cursor.execute("SELECT AVG(Temperature_Value) FROM TemperatureData WHERE Day_Of_Week = 'Thursday'")
+thursday_avg = cursor.fetchone()[0]
+
+# Step 4: Print results
+print("Average Temperature for Sunday: {:.2f}".format(sunday_avg if sunday_avg else 0))
+print("Average Temperature for Thursday: {:.2f}".format(thursday_avg if thursday_avg else 0))
+
+# this willl Close the connection
+conn.close()
